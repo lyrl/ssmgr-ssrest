@@ -18,18 +18,28 @@
 from __future__ import absolute_import, division, print_function, \
     with_statement
 import json
+
+import sys
 from flask import Flask, Response, request
 import threading
 from shadowsocks.manager import Manager
 from shadowsocks.cryptor import Cryptor
+from flask import abort
+import logging
 
-manager = Manager(
-    config={"server": "0.0.0.0", "server_port": 12223, "local_port": 1081, "password": "1z2x3c4v", "timeout": 600,
-            "method": "aes-256-cfb", "fast_open": False, "crypto_path": False})
+logging.basicConfig(level=5,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
 
-threading._start_new_thread(manager.run, ())
+manager = Manager()
 
 app = Flask(__name__)
+
+def check_security_key():
+    securityKey = request.headers.get('Authorization')
+
+    if securityKey != '1z2x3c4v':
+        abort(403)
 
 
 @app.route('/api/ping')
@@ -38,11 +48,15 @@ def ping():
 
 @app.route('/api/state')
 def stat():
+    check_security_key()
+
     return Response(json.dumps({'alive': threading.activeCount()}), mimetype='application/json')
 
 
 @app.route('/api/users', methods=['GET', 'POST', 'DELETE'])
 def users():
+    check_security_key()
+
     if request.method == 'GET':
         return Response(json.dumps({'users': manager.get_all_ports()}), mimetype='application/json')
     elif request.method == 'POST':
@@ -57,20 +71,23 @@ def users():
 
         data['password'] = data['password'].encode('utf-8')
 
-        print(method_info)
-
         if not method_info:
+            logging.error(u"不支持的加密算法%s!" % data['method'])
             return Response(json.dumps({'errors': {'message': u'不支持的加密算法 %s！' % data['method']}}), mimetype='application/json')
 
         if manager.is_has_port(data['server_port']):
+            logging.error(u"端口已经存在%s!")
             return Response(json.dumps({'errors': {'message': '端口已经存在！'}}), mimetype='application/json')
 
         if manager.add_port(data):
+            logging.error(u"端口%s添加成功!" % data['server_port'])
             return Response(json.dumps({'user': data}), mimetype='application/json')
 
 
 @app.route('/api/users/<int:port>', methods=['DELETE'])
 def delete_port(port):
+    check_security_key()
+
     if request.method == 'DELETE':
         if not manager.is_has_port(port):
             return Response(json.dumps({'errors': {'message': '端口不存在！'}}), mimetype='application/json')
@@ -80,4 +97,16 @@ def delete_port(port):
 
 
 if __name__ == "__main__":
+    try:
+        file = open('config.json', 'r')
+    except IOError as e:
+        logging.error(u'在当前目录下找不到配置文件：config.json!')
+        sys.exit(0)
+
+    config = json.loads(file.read())
+    manager.set_config(config)
+
+    # new thread to run loop
+    threading._start_new_thread(manager.run, ())
+
     app.run(port=9999)

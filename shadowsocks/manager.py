@@ -35,8 +35,8 @@ PORT_START_AT = 10000
 
 class Manager(object):
 
-    def __init__(self, config):
-        self._config = config
+    def __init__(self):
+        self._config = None
         self._relays = {}  # (tcprelay, udprelay, username, password, method)
         self._loop = eventloop.EventLoop()
         self._dns_resolver = asyncdns.DNSResolver()
@@ -44,6 +44,9 @@ class Manager(object):
 
         self._statistics = collections.defaultdict(int)
         self._control_client_addr = None
+
+    def set_config(self, config):
+        self._config = config
 
     def get_all_ports(self):
         return [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]
@@ -78,7 +81,6 @@ class Manager(object):
                     print(e)
             s.close()
             return False
-
 
     def add_port(self, config):
         a_config = self._config.copy()
