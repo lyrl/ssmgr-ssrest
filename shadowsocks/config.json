@@ -3,5 +3,9 @@
   "timeout": 600,
   "method": "aes-256-cfb",
   "fast_open": false,
-  "crypto_path": false
+  "crypto_path": false,
+
+  "security_key": "1z2x3c4v",
+  "ssmgr_server_port": "80",
+  "ssmgr_server_host": "103.180.111.111"
 }
