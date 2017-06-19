@@ -27,85 +27,93 @@ import collections
 
 from shadowsocks import common, eventloop, tcprelay, udprelay, asyncdns, shell
 
-
 BUF_SIZE = 1506
 STAT_SEND_LIMIT = 50
+
+PORT_START_AT = 10000
 
 
 class Manager(object):
 
     def __init__(self, config):
         self._config = config
-        self._relays = {}  # (tcprelay, udprelay)
+        self._relays = {}  # (tcprelay, udprelay, username, password, method)
         self._loop = eventloop.EventLoop()
         self._dns_resolver = asyncdns.DNSResolver()
         self._dns_resolver.add_to_loop(self._loop)
 
         self._statistics = collections.defaultdict(int)
         self._control_client_addr = None
-        try:
-            manager_address = config['manager_address']
-            if ':' in manager_address:
-                addr = manager_address.rsplit(':', 1)
-                addr = addr[0], int(addr[1])
-                addrs = socket.getaddrinfo(addr[0], addr[1])
-                if addrs:
-                    family = addrs[0][0]
-                else:
-                    logging.error('invalid address: %s', manager_address)
-                    exit(1)
-            else:
-                addr = manager_address
-                family = socket.AF_UNIX
-            self._control_socket = socket.socket(family,
-                                                 socket.SOCK_DGRAM)
-            self._control_socket.bind(addr)
-            self._control_socket.setblocking(False)
-        except (OSError, IOError) as e:
-            logging.error(e)
-            logging.error('can not bind to manager address')
-            exit(1)
-        self._loop.add(self._control_socket,
-                       eventloop.POLL_IN, self)
-        self._loop.add_periodic(self.handle_periodic)
 
-        port_password = config['port_password']
-        del config['port_password']
-        config['crypto_path'] = config.get('crypto_path', dict())
-        for port, password in port_password.items():
-            a_config = config.copy()
-            a_config['server_port'] = int(port)
-            a_config['password'] = password
-            self.add_port(a_config)
+    def get_all_ports(self):
+        return [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]
+
+    def is_has_port(self, port):
+        return self._relays.get(port, None)
+
+    def gen_port_num(self):
+        keys = self._relays.keys()
+
+        if len(keys) <= 0:
+            return PORT_START_AT
+
+        keys.sort()
+
+        port = keys[-1] + 1
+
+        while self.is_port_used(port):
+            port += 1
+
+        return port
+
+    def is_port_used(self, port):
+        while True:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                s.bind(('', port))  ## Try to open port
+            except socket.error as e:
+                if e.errno is 98:  ## Errorno 98 means address already bound
+                    return True
+                else:
+                    print(e)
+            s.close()
+            return False
+
 
     def add_port(self, config):
-        port = int(config['server_port'])
+        a_config = self._config.copy()
+        a_config.update(config)
+        port = int(a_config['server_port'])
         servers = self._relays.get(port, None)
         if servers:
-            logging.error("server already exists at %s:%d" % (config['server'],
-                                                              port))
-            return
-        logging.info("adding server at %s:%d" % (config['server'], port))
-        t = tcprelay.TCPRelay(config, self._dns_resolver, False,
+            logging.error("server already exists at %s:%d" % (a_config['server'],port))
+            return False
+        logging.info("adding server at %s:%d" % (a_config['server'], port))
+        t = tcprelay.TCPRelay(a_config, self._dns_resolver, False,
                               self.stat_callback)
-        u = udprelay.UDPRelay(config, self._dns_resolver, False,
+        u = udprelay.UDPRelay(a_config, self._dns_resolver, False,
                               self.stat_callback)
         t.add_to_loop(self._loop)
         u.add_to_loop(self._loop)
-        self._relays[port] = (t, u)
+        self._relays[port] = (t, u, a_config['username'], a_config['password'], a_config['method'])
+
+        return True
 
     def remove_port(self, config):
-        port = int(config['server_port'])
+        a_config = self._config.copy()
+        a_config.update(config)
+        port = int(a_config['server_port'])
         servers = self._relays.get(port, None)
         if servers:
-            logging.info("removing server at %s:%d" % (config['server'], port))
-            t, u = servers
+            logging.info("removing server at %s:%d" % (a_config['server'], port))
+            t, u, username, password, method = servers
             t.close(next_tick=False)
             u.close(next_tick=False)
             del self._relays[port]
+            return True
         else:
-            logging.error("server not exist at %s:%d" % (config['server'],
-                                                         port))
+            logging.error("server not exist at %s:%d" % (a_config['server']))
+            return False
 
     def handle_event(self, sock, fd, event):
         if sock == self._control_socket and event == eventloop.POLL_IN:
@@ -290,4 +298,6 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
+    # test()
+    manager = Manager(None)
+    manager.run()

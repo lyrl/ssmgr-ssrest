@@ -193,10 +193,11 @@ class EventLoop(object):
     def run(self):
         events = []
         while not self._stopping:
+            logging.error("server is alive！")
             asap = False
             try:
                 events = self.poll(TIMEOUT_PRECISION)
-            except (OSError, IOError) as e:
+            except (OSError, IOError, KeyError) as e:
                 if errno_from_exception(e) in (errno.EPIPE, errno.EINTR):
                     # EPIPE: Happens when the client closes the connection
                     # EINTR: Happens when received a signal
