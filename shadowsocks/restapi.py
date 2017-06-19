@@ -109,4 +109,4 @@ if __name__ == "__main__":
     # new thread to run loop
     threading._start_new_thread(manager.run, ())
 
-    app.run(port=9999)
+    app.run(port=config['api_port'])
