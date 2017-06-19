@@ -1,0 +1,7 @@
+{
+  "server": "0.0.0.0",
+  "timeout": 600,
+  "method": "aes-256-cfb",
+  "fast_open": false,
+  "crypto_path": false
+}

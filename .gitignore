@@ -42,4 +42,4 @@ venv/
 .idea
 
 #ss
-config.json
+#config.json
