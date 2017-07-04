@@ -27,6 +27,8 @@ import collections
 
 from shadowsocks import common, eventloop, tcprelay, udprelay, asyncdns, shell
 
+import shadowsocks.util as util
+
 BUF_SIZE = 1506
 STAT_SEND_LIMIT = 50
 
@@ -44,6 +46,7 @@ class Manager(object):
 
         self._statistics = collections.defaultdict(int)
         self._control_client_addr = None
+        self._loop.add_periodic(self.handle_periodic)
 
     def set_config(self, config):
         self._config = config
@@ -53,6 +56,20 @@ class Manager(object):
 
     def is_has_port(self, port):
         return self._relays.get(port, None)
+
+    def is_has_user(self, username):
+        if self.get_port_by_username(username):
+            return True
+        else:
+            return False
+
+    def get_port_by_username(self, username):
+        for key in self._relays.keys():
+
+            r = self._relays.get(key)
+
+            if r[2] == username:
+                return key
 
     def gen_port_num(self):
         keys = self._relays.keys()
@@ -163,26 +180,23 @@ class Manager(object):
         self._statistics[port] += data_len
 
     def handle_periodic(self):
-        r = {}
-        i = 0
+        logging.debug("ready to report users traffic data to backend server!")
 
-        def send_data(data_dict):
-            if data_dict:
-                # use compact JSON format (without space)
-                data = common.to_bytes(json.dumps(data_dict,
-                                                  separators=(',', ':')))
-                self._send_control_data(b'stat: ' + data)
+        data = {
+            "traffics": self._statistics,
+            "security_key": self._config['security_key']
+        }
 
-        for k, v in self._statistics.items():
-            r[k] = v
-            i += 1
-            # split the data into segments that fit in UDP packets
-            if i >= STAT_SEND_LIMIT:
-                send_data(r)
-                r.clear()
-                i = 0
-        if len(r) > 0:
-            send_data(r)
+        logging.debug("data:" + json.dumps(data))
+
+        url = 'http://%s:%s/api/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
+
+        try:
+            util.send_post(url, data)
+        except util.HttpUtilException as e:
+            logging.error('send failed try later!')
+            return
+
         self._statistics.clear()
 
     def _send_control_data(self, data):

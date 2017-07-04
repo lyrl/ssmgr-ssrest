@@ -28,19 +28,12 @@ from flask import abort
 import logging
 
 logging.basicConfig(level=5,
-                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        format='%(asctime)s [%(module)s] %(levelname)-8s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
 manager = Manager()
-
 app = Flask(__name__)
-
-def check_security_key():
-    securityKey = request.headers.get('Authorization')
-
-    if securityKey != '1z2x3c4v':
-        abort(403)
-
+config = None
 
 @app.route('/api/ping')
 def ping():
@@ -48,14 +41,14 @@ def ping():
 
 @app.route('/api/state')
 def stat():
-    check_security_key()
+    _check_security_key()
 
     return Response(json.dumps({'alive': threading.activeCount()}), mimetype='application/json')
 
 
 @app.route('/api/users', methods=['GET', 'POST', 'DELETE'])
 def users():
-    check_security_key()
+    _check_security_key()
 
     if request.method == 'GET':
         return Response(json.dumps({'users': manager.get_all_ports()}), mimetype='application/json')
@@ -84,9 +77,23 @@ def users():
             return Response(json.dumps({'user': data}), mimetype='application/json')
 
 
-@app.route('/api/users/<int:port>', methods=['DELETE'])
+@app.route('/api/users/<string:username>', methods=['DELETE'])
+def delete_user(username):
+    _check_security_key()
+
+    if request.method == 'DELETE':
+        port = manager.get_port_by_username(username)
+
+        if not port:
+            return Response(json.dumps({'errors': {'message': '用户不存在！'}}), mimetype='application/json')
+
+        if manager.remove_port({'server_port': port}):
+            return Response(json.dumps({'server_port': port}), mimetype='application/json')
+
+
+@app.route('/api/ports/<int:port>', methods=['DELETE'])
 def delete_port(port):
-    check_security_key()
+    _check_security_key()
 
     if request.method == 'DELETE':
         if not manager.is_has_port(port):
@@ -94,6 +101,13 @@ def delete_port(port):
 
         if manager.remove_port({'server_port': port}):
             return Response(json.dumps({'server_port': port}), mimetype='application/json')
+
+
+def _check_security_key():
+    security_key = request.headers.get('Authorization')
+
+    if security_key != config['security_key']:
+        abort(403)
 
 
 if __name__ == "__main__":
@@ -109,4 +123,4 @@ if __name__ == "__main__":
     # new thread to run loop
     threading._start_new_thread(manager.run, ())
 
-    app.run(port=config['api_port'])
+    app.run(port=config['rest_api_port'])

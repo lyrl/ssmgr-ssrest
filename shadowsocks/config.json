@@ -9,5 +9,5 @@
   "ssmgr_backend_port": "80",
   "ssmgr_backend_host": "103.180.111.111",
 
-  "api_port": 9999
+  "rest_api_port": 9999
 }
