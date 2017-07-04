@@ -67,6 +67,7 @@ class Manager(object):
 
         for user in node['users']:
             data = {}
+            data['username'] = user['user_name']
             data['password'] = user['userNodes']['password']
             data['method'] = user['userNodes']['method']
             data['server_port'] = user['userNodes']['port']
