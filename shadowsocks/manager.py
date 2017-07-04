@@ -181,7 +181,7 @@ class Manager(object):
         self._statistics[port] += data_len
 
     def handle_periodic(self):
-        if not self._statistics.keys():
+        if not len(self._statistics):
             return
 
         logging.debug("ready to report users traffic data to backend server!")
