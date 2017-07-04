@@ -26,6 +26,7 @@ from shadowsocks.manager import Manager
 from shadowsocks.cryptor import Cryptor
 from flask import abort
 import logging
+from shadowsocks import cryptor
 
 logging.basicConfig(level=5,
                         format='%(asctime)s [%(module)s] %(levelname)-8s %(message)s',
@@ -71,6 +72,9 @@ def users():
         if manager.is_has_port(data['server_port']):
             logging.error(u"端口已经存在%s!")
             return Response(json.dumps({'errors': {'message': '端口已经存在！'}}), mimetype='application/json')
+
+        cryptor.try_cipher(config['password'], config['method'],
+                           config['crypto_path'])
 
         if manager.add_port(data):
             logging.error(u"端口%s添加成功!" % data['server_port'])
