@@ -59,7 +59,7 @@ class Manager(object):
         url = 'http://%s:%s/api/comm/node/users/%s' % (
         self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'], self._config['security_key'])
 
-        data = urllib2.urlopen(url).read()
+        data = urllib2.urlopen(url)
         node = json.load(data)
 
         for user in node.users:
