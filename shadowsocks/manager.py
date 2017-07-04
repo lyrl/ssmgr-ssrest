@@ -63,7 +63,7 @@ class Manager(object):
         data = f.read()
         logging.info("用户列表 : %s" % data)
 
-        node = json.load(data)
+        node = json.loads(data)
 
         for user in node.users:
             data = {}
