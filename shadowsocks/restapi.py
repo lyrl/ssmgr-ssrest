@@ -15,6 +15,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import sys
+import os
+path = os.getcwd()
+if path not in sys.path:
+    sys.path.append(path)
 from __future__ import absolute_import, division, print_function, \
     with_statement
 import json
