@@ -73,9 +73,6 @@ def users():
             logging.error(u"端口已经存在%s!")
             return Response(json.dumps({'errors': {'message': '端口已经存在！'}}), mimetype='application/json')
 
-        cryptor.try_cipher(config['password'], config['method'],
-                           config['crypto_path'])
-
         if manager.add_port(data):
             logging.error(u"端口%s添加成功!" % data['server_port'])
             return Response(json.dumps({'user': data}), mimetype='application/json')
@@ -123,6 +120,9 @@ if __name__ == "__main__":
 
     config = json.loads(file.read())
 
+    config['libopenssl'] = config.get('libopenssl', None)
+    config['libmbedtls'] = config.get('libmbedtls', None)
+    config['libsodium'] = config.get('libsodium', None)
     config['crypto_path'] = {'openssl': config['libopenssl'],
                              'mbedtls': config['libmbedtls'],
                              'sodium': config['libsodium']}
