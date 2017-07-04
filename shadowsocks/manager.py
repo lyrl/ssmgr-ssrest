@@ -65,7 +65,7 @@ class Manager(object):
 
         node = json.loads(data)
 
-        for user in node.users:
+        for user in node['users']:
             data = {}
             data['password'] = user.userNodes.password
             data['method'] = user.userNodes.method
