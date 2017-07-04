@@ -14,14 +14,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+
 from __future__ import absolute_import, division, print_function, \
     with_statement
-import sys
-import os
-path = os.getcwd()
-if path not in sys.path:
-    sys.path.append(path)
 import json
+
 import sys
 from flask import Flask, Response, request
 import threading
