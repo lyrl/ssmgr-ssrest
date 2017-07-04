@@ -118,6 +118,11 @@ if __name__ == "__main__":
         sys.exit(0)
 
     config = json.loads(file.read())
+
+    config['crypto_path'] = {'openssl': config['libopenssl'],
+                             'mbedtls': config['libmbedtls'],
+                             'sodium': config['libsodium']}
+
     manager.set_config(config)
 
     # new thread to run loop
