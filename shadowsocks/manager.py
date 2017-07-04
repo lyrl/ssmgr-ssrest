@@ -180,24 +180,25 @@ class Manager(object):
         self._statistics[port] += data_len
 
     def handle_periodic(self):
-        logging.debug("ready to report users traffic data to backend server!")
-
-        data = {
-            "traffics": self._statistics,
-            "security_key": self._config['security_key']
-        }
-
-        logging.debug("data:" + json.dumps(data))
-
-        url = 'http://%s:%s/api/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
-
-        try:
-            util.send_post(url, data)
-        except util.HttpUtilException as e:
-            logging.error('send failed try later!')
-            return
-
-        self._statistics.clear()
+        # logging.debug("ready to report users traffic data to backend server!")
+        #
+        # data = {
+        #     "traffics": self._statistics,
+        #     "security_key": self._config['security_key']
+        # }
+        #
+        # logging.debug("data:" + json.dumps(data))
+        #
+        # url = 'http://%s:%s/api/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
+        #
+        # try:
+        #     util.send_post(url, data)
+        # except util.HttpUtilException as e:
+        #     logging.error('send failed try later!')
+        #     return
+        #
+        # self._statistics.clear()
+        None
 
     def _send_control_data(self, data):
         if not self._control_client_addr:

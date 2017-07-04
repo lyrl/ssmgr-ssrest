@@ -20,6 +20,8 @@ from __future__ import absolute_import, division, print_function, \
 import json
 
 import sys
+
+import gevent
 from flask import Flask, Response, request
 import threading
 from shadowsocks.manager import Manager
@@ -27,14 +29,22 @@ from shadowsocks.cryptor import Cryptor
 from flask import abort
 import logging
 from shadowsocks import cryptor
+from shadowsocks.queue import add_task
+from shadowsocks.queue import loop
 
-logging.basicConfig(level=5,
+logging.basicConfig(level=20,
                         format='%(asctime)s [%(module)s] %(levelname)-8s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
 manager = Manager()
 app = Flask(__name__)
 config = None
+
+
+@app.route('/api/test')
+def test():
+    add_task({'url': 'http://baidu.com2', 'data': '{}'})
+    return 'added'
 
 @app.route('/api/ping')
 def ping():
@@ -64,6 +74,7 @@ def users():
         method_info = Cryptor.get_method_info(data['method'].lower())
 
         data['password'] = data['password'].encode('utf-8')
+        data['method'] = data['method'].encode('utf-8')
 
         if not method_info:
             logging.error(u"不支持的加密算法%s!" % data['method'])
@@ -119,17 +130,10 @@ if __name__ == "__main__":
         sys.exit(0)
 
     config = json.loads(file.read())
-
-    config['libopenssl'] = config.get('libopenssl', None)
-    config['libmbedtls'] = config.get('libmbedtls', None)
-    config['libsodium'] = config.get('libsodium', None)
-    config['crypto_path'] = {'openssl': config['libopenssl'],
-                             'mbedtls': config['libmbedtls'],
-                             'sodium': config['libsodium']}
-
     manager.set_config(config)
 
     # new thread to run loop
     threading._start_new_thread(manager.run, ())
+    threading._start_new_thread(loop, ())
 
     app.run(port=config['rest_api_port'], host='0.0.0.0')
