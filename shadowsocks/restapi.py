@@ -123,4 +123,4 @@ if __name__ == "__main__":
     # new thread to run loop
     threading._start_new_thread(manager.run, ())
 
-    app.run(port=config['rest_api_port'])
+    app.run(port=config['rest_api_port'], host='0.0.0.0')
