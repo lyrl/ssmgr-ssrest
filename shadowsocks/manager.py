@@ -24,6 +24,7 @@ import socket
 import logging
 import json
 import collections
+import urllib2
 
 from shadowsocks import common, eventloop, tcprelay, udprelay, asyncdns, shell
 
@@ -51,6 +52,25 @@ class Manager(object):
 
     def set_config(self, config):
         self._config = config
+
+    def sync_users(self):
+        logging.info("节点初始化 开始同步节点已有用户信息！")
+
+        url = 'http://%s:%s/api/comm/node/users/%s' % (
+        self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'], self._config['security_key'])
+
+        data = urllib2.urlopen(url).read()
+        node = json.load(data)
+
+        for user in node.users:
+            data = {}
+            data['password'] = user.userNodes.password
+            data['method'] = user.userNodes.method
+            data['server_port'] = user.userNodes.port
+            self.add_port(data)
+
+        logging.info("节点初始化完成 同步用户数 %s！" % len(node.users))
+
 
     def get_all_ports(self):
         return [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]

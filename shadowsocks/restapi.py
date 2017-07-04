@@ -132,6 +132,8 @@ if __name__ == "__main__":
     config = json.loads(file.read())
     manager.set_config(config)
 
+    manager.sync_users()
+
     # new thread to run loop
     threading._start_new_thread(manager.run, ())
     threading._start_new_thread(loop, ())
