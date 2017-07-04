@@ -16,3 +16,8 @@
 
 from __future__ import absolute_import, division, print_function, \
     with_statement
+import sys
+import os
+path = os.getcwd()
+if path not in sys.path:
+    sys.path.append(path)
