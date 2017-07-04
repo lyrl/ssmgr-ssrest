@@ -52,6 +52,7 @@ class Manager(object):
 
     def set_config(self, config):
         self._config = config
+        self._config['verbose'] = False
 
     def sync_users(self):
         logging.info("节点初始化 开始同步节点已有用户信息！")
