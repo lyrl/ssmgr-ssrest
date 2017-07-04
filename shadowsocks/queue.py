@@ -13,7 +13,7 @@ def worker(n):
     logging.info('Worker %s got task %s' % (n, task))
 
     try:
-        data = shadowsocks.util.send_post(task['url'], task['data'])
+        data = shadowsocks.util.send_post(task['url'], {'data': task['data']})
         print data
     except HttpUtilException as e:
         logging.warn('create a new task!!! %s' % e.message)

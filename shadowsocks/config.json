@@ -6,8 +6,8 @@
   "crypto_path": false,
 
   "security_key": "1z2x3c4v",
-  "ssmgr_backend_port": "80",
-  "ssmgr_backend_host": "103.180.111.111",
+  "ssmgr_backend_port": "3001",
+  "ssmgr_backend_host": "127.0.0.1",
 
   "rest_api_port": 9999
 }
