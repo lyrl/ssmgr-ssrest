@@ -76,7 +76,6 @@ class Manager(object):
 
         logging.info("节点初始化完成 同步用户数 %s！" % len(node['users']))
 
-
     def get_all_ports(self):
         return [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]
 
@@ -206,9 +205,6 @@ class Manager(object):
         self._statistics[port] += data_len
 
     def handle_periodic(self):
-        if not len(self._statistics):
-            return
-
         logging.debug("ready to report users traffic data to backend server!")
 
         data = {
