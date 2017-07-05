@@ -72,6 +72,8 @@ class Manager(object):
 
         node = json.loads(data)
 
+        synced_user_count = 0
+
         for user in node['users']:
             data = {}
             data['username'] = user['user_name'].encode('utf-8')
@@ -81,8 +83,9 @@ class Manager(object):
             if not user['userNodes']['port']:
                 continue
             self.add_port(data)
+            synced_user_count = synced_user_count + 1
 
-        logging.info("节点初始化完成 同步用户数 %s！" % len(node['users']))
+        logging.info("节点初始化完成 同步用户数 %s！" % synced_user_count)
 
     def get_all_ports(self):
         return [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]
