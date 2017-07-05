@@ -17,8 +17,9 @@ def worker(n):
         print data
     except HttpUtilException as e:
         logging.warn('create a new task!!! %s' % e.message)
-        failedTasks.append(task)
-        pass
+
+        if task['data']:
+            failedTasks.append(task)
 
     gevent.sleep(0)
 
