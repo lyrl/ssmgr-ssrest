@@ -64,7 +64,7 @@ def users():
     elif request.method == 'POST':
         data = json.loads(request.data)['user']
 
-        if data.has_key('port') and data['port']:
+        if data.has_key('port') and data['port'] and data['port'] != 'null':
             data['server_port'] = data['port']
         else:
             data['server_port'] = manager.gen_port_num()
