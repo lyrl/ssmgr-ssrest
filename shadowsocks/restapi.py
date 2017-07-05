@@ -23,6 +23,7 @@ import sys
 
 import gevent
 from flask import Flask, Response, request
+from flask_cors import CORS
 import threading
 from shadowsocks.manager import Manager
 from shadowsocks.cryptor import Cryptor
@@ -39,6 +40,7 @@ logging.basicConfig(level=20,
 manager = Manager()
 app = Flask(__name__)
 config = None
+CORS(app)
 
 
 @app.route('/api/test')
