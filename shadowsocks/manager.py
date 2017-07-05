@@ -80,7 +80,9 @@ class Manager(object):
             data['password'] = user['userNodes']['password'].encode('utf-8')
             data['method'] = user['userNodes']['method'].encode('utf-8')
 
-            if not user['userNodes']['port'] and user['userNodes']['port'] != 'null':
+            logging.info("用户 %s 端口 %s" % (user['user_name'], user['userNodes']['port']))
+
+            if not user['userNodes']['port']:
                 continue
             self.add_port(data)
             synced_user_count = synced_user_count + 1
