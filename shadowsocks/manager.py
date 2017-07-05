@@ -81,7 +81,7 @@ class Manager(object):
             if user['userNodes']['port']:
                 data['server_port'] = user['userNodes']['port']
             else:
-                data['server_port'] = manager.gen_port_num()
+                data['server_port'] = self.gen_port_num()
             self.add_port(data)
 
         logging.info("节点初始化完成 同步用户数 %s！" % len(node['users']))
