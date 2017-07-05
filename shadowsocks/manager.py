@@ -80,7 +80,7 @@ class Manager(object):
             data['password'] = user['userNodes']['password'].encode('utf-8')
             data['method'] = user['userNodes']['method'].encode('utf-8')
 
-            logging.info("用户 %s 端口 %s" % (user['user_name'], user['userNodes']['port']))
+            logging.info(u"用户 %s 端口 %s" % (user['user_name'], user['userNodes']['port']))
 
             if not user['userNodes']['port']:
                 continue
