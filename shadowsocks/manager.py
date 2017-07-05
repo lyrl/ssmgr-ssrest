@@ -60,7 +60,13 @@ class Manager(object):
         url = 'http://%s:%s/api/comm/node/users/%s' % (
         self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'], self._config['security_key'])
 
-        f = urllib2.urlopen(url)
+        try:
+            f = urllib2.urlopen(url)
+        except Exception as e:
+            print(e.message)
+            logging.info("节点用户获取失败 : %s" % e.message)
+            return
+
         data = f.read()
         logging.info("用户列表 : %s" % data)
 
