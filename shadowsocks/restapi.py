@@ -43,14 +43,10 @@ config = None
 CORS(app)
 
 
-@app.route('/api/test')
-def test():
-    add_task({'url': 'http://baidu.com2', 'data': '{}'})
-    return 'added'
-
 @app.route('/api/ping')
 def ping():
     return 'pong'
+
 
 @app.route('/api/state')
 def stat():
