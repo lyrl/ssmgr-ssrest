@@ -84,6 +84,7 @@ class Manager(object):
 
             if not user['userNodes']['port']:
                 continue
+            data['server_port'] = user['userNodes']['port']
             self.add_port(data)
             synced_user_count = synced_user_count + 1
 
