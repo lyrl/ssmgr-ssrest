@@ -78,10 +78,8 @@ class Manager(object):
             data['password'] = user['userNodes']['password'].encode('utf-8')
             data['method'] = user['userNodes']['method'].encode('utf-8')
 
-            if user['userNodes']['port']:
-                data['server_port'] = user['userNodes']['port']
-            else:
-                data['server_port'] = self.gen_port_num()
+            if not user['userNodes']['port']:
+                continue
             self.add_port(data)
 
         logging.info("节点初始化完成 同步用户数 %s！" % len(node['users']))
