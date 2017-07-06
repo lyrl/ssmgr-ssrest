@@ -18,7 +18,7 @@ def worker(n):
     except HttpUtilException as e:
         logging.warn('create a new task!!! %s' % e.message)
 
-        if task['data']:
+        if task['data']['traffics']:
             failedTasks.append(task)
 
     gevent.sleep(0)
