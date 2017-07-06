@@ -55,7 +55,7 @@ def stat():
     return Response(json.dumps({'alive': threading.activeCount()}), mimetype='application/json')
 
 
-@app.route('/api/users', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/users', methods=['GET', 'POST'])
 def users():
     _check_security_key()
 
