@@ -55,6 +55,81 @@ def stat():
     return Response(json.dumps({'alive': threading.activeCount()}), mimetype='application/json')
 
 
+@app.route('/api/sync', methods=['POST'])
+def sync():
+    # 清理掉僵尸端口
+    # 更正密码不一一致的端口
+    # 清理掉不存在于数据库中的端口
+
+    # user 字段
+    # user = {
+    #     username: user.username,
+    #     password: user.userNodes.password,
+    #     method: user.userNodes.method,
+    #     port: user.userNodes.port
+    # };
+
+    _check_security_key()
+
+    if request.method == 'POST':
+        users = json.loads(request.data)['users']
+        logging.info("接收同步用户请求! 数据: %s" % json.dumps(users))
+
+        # dict(u, u) for u in users
+        req_data = {u['username']: u for u in users}
+
+
+        node_data = manager.get_all_ports()
+        node_data_map = {n['username']: n for n in node_data}
+
+        # 1. 先检查不存在节点上的用户 直接同步
+        for u in req_data.keys():
+            if not node_data_map.has_key(u):
+                logging.info("用户 %s 不存在于节点，将同步！" % u)
+                cmp_data = req_data[u]
+                cmp_data['server_port'] = cmp_data['port']
+                cmp_data['password'] = cmp_data['password'].encode('utf-8')
+                cmp_data['method'] = cmp_data['method'].encode('utf-8')
+                manager.add_port(cmp_data)
+                logging.info("同步成功！")
+
+        # [{'port': k, 'username': self._relays[k][2], 'password': self._relays[k][3], 'method': self._relays[k][4]} for k in self._relays.keys()]
+        # 2. 存在于节点上的用户，检查配置是否与数据库中一致
+        for data in node_data:
+            # 移除不存在于数据库中发用户
+            if not req_data.has_key(data['username']):
+                logging.info("用户 %s 不存在于数据库中，将移除！" % data['username'])
+                manager.remove_port({'server_port': data['port']})
+                logging.info("移除成功！")
+            else:  # 存在于数据库中的用户，需要检查密码、加密方式是否一致
+                cmp_data = req_data[data['username']]
+
+                cmp_data['server_port'] = cmp_data['port']
+                cmp_data['password'] = cmp_data['password'].encode('utf-8')
+                cmp_data['method'] = cmp_data['method'].encode('utf-8')
+
+                if cmp_data['port'] and cmp_data['port'] != data['port']:
+                    logging.info("用户 %s 端口与数据库中不一致将强制同步！" % data['username'])
+                    manager.remove_port({'server_port': data['port']})
+                    manager.add_port(cmp_data)
+                    logging.info("同步成功！")
+
+                if cmp_data['password'] != data['password']:
+                    logging.info("用户 %s 密码与数据库中不一致将强制同步！" % data['username'])
+                    manager.remove_port({'server_port': data['port']})
+                    manager.add_port(cmp_data)
+                    logging.info("同步成功！")
+
+                if cmp_data['method'] != data['method']:
+                    logging.info("用户 %s 加密方式与数据库中不一致将强制同步！" % data['username'])
+                    manager.remove_port({'server_port': data['port']})
+                    manager.add_port(cmp_data)
+                    logging.info("同步成功！")
+
+    pass
+
+
+
 @app.route('/api/users', methods=['GET', 'POST'])
 def users():
     _check_security_key()
