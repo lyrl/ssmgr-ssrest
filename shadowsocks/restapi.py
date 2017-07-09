@@ -126,8 +126,7 @@ def sync():
                     manager.add_port(cmp_data)
                     logging.info("同步成功！")
 
-    pass
-
+    return Response(json.dumps({'users': manager.get_all_ports()}), mimetype='application/json')
 
 
 @app.route('/api/users', methods=['GET', 'POST'])
