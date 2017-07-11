@@ -46,7 +46,7 @@ class Manager(object):
         self._dns_resolver = asyncdns.DNSResolver()
         self._dns_resolver.add_to_loop(self._loop)
 
-        self._statistics = collections.defaultdict(int)
+        self._statistics = collections.defaultdict(dict)
         self._control_client_addr = None
         self._loop.add_periodic(self.handle_periodic)
 
@@ -215,22 +215,57 @@ class Manager(object):
             logging.error(e)
             return None
 
-    def stat_callback(self, port, data_len):
-        self._statistics[port] += data_len
+    def stat_callback(self, port, activity):
+        # activity = {
+        #     'remote_address': self._remote_address,
+        #     'client_address': self._client_address,
+        #     'protocal': 'TCP',
+        #     'type': 'UP',
+        #     'traffic': len(data),
+        #     'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        # }
+
+        tcp_up = activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'UP' else 0,
+        tcp_down = activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'DOWN' else 0,
+        udp_up = activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'UP' else 0,
+        udp_down = activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'DOWN' else 0,
+
+        if self._statistics[port]:
+            traffic = self._statistics[port]
+
+            traffic['activities'].append(activity)
+
+            traffic['total'] += activity['traffic']
+
+            traffic['tcpUp'] += tcp_up
+            traffic['tcpDown'] += tcp_down
+            traffic['udpUp'] += udp_up
+            traffic['udpDown'] += udp_down
+        else:
+            traffic = {
+                'total': activity['traffic'],
+                'tcpUp': tcp_up,
+                'tcpDown': tcp_down,
+                'udpUp': udp_up,
+                'udpDown': udp_down,
+                'activities': [activity]
+            }
+            self._statistics[port] = traffic
+        # self._statistics[port] += data_len
 
     def handle_periodic(self):
-        logging.debug("ready to report users traffic data to backend server!")
+        logging.info("ready to report users traffic data to backend server!")
 
         data = {
             "traffics": self._statistics,
             "security_key": self._config['security_key']
         }
 
-        logging.debug("data:" + json.dumps(data))
+        logging.info("data:" + json.dumps(data))
 
-        url = 'http://%s:%s/api/comm/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
-
-        add_task({'url': url, 'data': data})
+        # url = 'http://%s:%s/api/comm/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
+        #
+        # add_task({'url': url, 'data': data})
 
         self._statistics.clear()
 

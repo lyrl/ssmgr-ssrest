@@ -26,6 +26,8 @@ import logging
 import traceback
 import random
 
+import datetime
+
 from shadowsocks import cryptor, eventloop, shell, common
 from shadowsocks.common import parse_header, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ONETIMEAUTH_CHUNK_BYTES, \
@@ -173,10 +175,10 @@ class TCPRelayHandler(object):
         logging.debug('chosen server: %s:%d', server, server_port)
         return server, server_port
 
-    def _update_activity(self, data_len=0):
+    def _update_activity(self, activity=None):
         # tell the TCP Relay we have activities recently
         # else it will think we are inactive and timed out
-        self._server.update_activity(self, data_len)
+        self._server.update_activity(self, activity)
 
     def _update_stream(self, stream, status):
         # update a stream to a new waiting status
@@ -569,7 +571,24 @@ class TCPRelayHandler(object):
         if not data:
             self.destroy()
             return
-        self._update_activity(len(data))
+
+        # header_result = parse_header(data)
+
+        # remote_addr = self.remote_address if self.remote_address else header_result[1]
+
+        activity = {
+            'remote_address': self.remote_address,
+            'client_address': self._client_address,
+            'protocal': 'TCP',
+            'type': 'UP',
+            'traffic': len(data),
+            'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        self._update_activity(activity)
+        # self._remote_address
+        # self._client_address
+
         if not is_local:
             data = self._cryptor.decrypt(data)
             if not data:
@@ -607,7 +626,17 @@ class TCPRelayHandler(object):
         if not data:
             self.destroy()
             return
-        self._update_activity(len(data))
+
+        activity = {
+            'remote_address': self._remote_address,
+            'client_address': self._client_address,
+            'protocal': 'TCP',
+            'type': 'DOWN',
+            'traffic': len(data),
+            'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        self._update_activity(activity)
         if self._is_local:
             data = self._cryptor.decrypt(data)
         else:
@@ -780,9 +809,9 @@ class TCPRelay(object):
             self._timeouts[index] = None
             del self._handler_to_timeouts[hash(handler)]
 
-    def update_activity(self, handler, data_len):
-        if data_len and self._stat_callback:
-            self._stat_callback(self._listen_port, data_len)
+    def update_activity(self, handler, activity):
+        if activity and self._stat_callback:
+            self._stat_callback(self._listen_port, activity)
 
         # set handler to active
         now = int(time.time())

@@ -68,6 +68,8 @@ import struct
 import errno
 import random
 
+import datetime
+
 from shadowsocks import cryptor, eventloop, lru_cache, common, shell
 from shadowsocks.common import parse_header, pack_addr, onetimeauth_verify, \
     onetimeauth_gen, ONETIMEAUTH_BYTES, ADDRTYPE_AUTH
@@ -155,8 +157,6 @@ class UDPRelay(object):
         iv = None
         if not data:
             logging.debug('UDP handle_server: data is empty')
-        if self._stat_callback:
-            self._stat_callback(self._listen_port, len(data))
         if self._is_local:
             if self._is_tunnel:
                 # add ss header to data
@@ -189,6 +189,18 @@ class UDPRelay(object):
         addrtype, dest_addr, dest_port, header_length = header_result
         logging.info("udp data to %s:%d from %s:%d"
                      % (dest_addr, dest_port, r_addr[0], r_addr[1]))
+
+        if self._stat_callback:
+            activity = {
+                'remote_address': r_addr[0],
+                'client_address': dest_addr,
+                'protocal': 'UDP',
+                'type': 'DOWN',
+                'traffic': len(data),
+                'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            self._stat_callback(self._listen_port, activity)
+
         if self._is_local:
             server_addr, server_port = self._get_a_server()
         else:
@@ -268,8 +280,6 @@ class UDPRelay(object):
         if not data:
             logging.debug('UDP handle_client: data is empty')
             return
-        if self._stat_callback:
-            self._stat_callback(self._listen_port, len(data))
         if not self._is_local:
             addrlen = len(r_addr[0])
             if addrlen > 255:
@@ -305,6 +315,18 @@ class UDPRelay(object):
             else:
                 response = b'\x00\x00\x00' + data
         client_addr = self._client_fd_to_server_addr.get(sock.fileno())
+
+        if self._stat_callback:
+            activity = {
+                'remote_address': client_addr,
+                'client_address': r_addr[0],
+                'protocal': 'UDP',
+                'type': 'UP',
+                'traffic': len(data),
+                'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            self._stat_callback(self._listen_port, activity)
+
         if client_addr:
             logging.debug("send udp response to %s:%d"
                           % (client_addr[0], client_addr[1]))

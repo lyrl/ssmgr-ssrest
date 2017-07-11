@@ -193,7 +193,7 @@ class EventLoop(object):
     def run(self):
         events = []
         while not self._stopping:
-            logging.debug("server is alive！")
+            logging.info("server is alive！")
             asap = False
             try:
                 events = self.poll(TIMEOUT_PRECISION)
