@@ -263,9 +263,9 @@ class Manager(object):
 
         logging.info("data:" + json.dumps(data))
 
-        # url = 'http://%s:%s/api/comm/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
-        #
-        # add_task({'url': url, 'data': data})
+        url = 'http://%s:%s/api/comm/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
+
+        add_task({'url': url, 'data': data})
 
         self._statistics.clear()
 
