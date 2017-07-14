@@ -30,7 +30,6 @@ def loop():
 
 
 def work(task):
-    task = tasks.get()
     logging.info('Prepare push traffic data to %s' % (task['url']))
 
     try:
