@@ -336,9 +336,21 @@ class TCPRelayHandler(object):
         if header_result is None:
             raise Exception('can not parse header')
         addrtype, remote_addr, remote_port, header_length = header_result
-        logging.info('connecting %s:%d from %s:%d' %
+        logging.info('connecting %s:%d from %s:%d stage %s data len %s ' %
                      (common.to_str(remote_addr), remote_port,
-                      self._client_address[0], self._client_address[1]))
+                      self._client_address[0], self._client_address[1],self._stage, len(data)))
+
+        if self._stage == STAGE_INIT:
+            activity = {
+                'remote_address': common.to_str(remote_addr),
+                'local_address': self._client_address[0],
+                'protocal': 'TCP',
+                'type': 'UP',
+                'traffic': len(data) + 16,
+                'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            self._update_activity(activity)
+
         if self._is_local is False:
             # spec https://shadowsocks.org/en/spec/one-time-auth.html
             self._ota_enable_session = addrtype & ADDRTYPE_AUTH
@@ -572,20 +584,34 @@ class TCPRelayHandler(object):
             self.destroy()
             return
 
+        logging.info("current stage %s remote address %s data len %s" % (self._stage, self._remote_address[0] if self._remote_address else None, len(data)))
+
+        if self._stage == STAGE_STREAM:
+            activity = {
+                'remote_address': self._remote_address[0],
+                'local_address': self._client_address[0],
+                'protocal': 'TCP',
+                'type': 'UP',
+                'traffic': len(data),
+                'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            self._update_activity(activity)
+
+
+
         # header_result = parse_header(data)
-
-        # remote_addr = self.remote_address if self.remote_address else header_result[1]
-
-        activity = {
-            'remote_address': self.remote_address,
-            'client_address': self._client_address,
-            'protocal': 'TCP',
-            'type': 'UP',
-            'traffic': len(data),
-            'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-        self._update_activity(activity)
+        #
+        # remote_addr = None
+        #
+        # if header_result:
+        #     remote_addr = header_result[1]
+        # elif self.remote_address:
+        #     remote_addr = self.remote_address[0]
+        #
+        #
+        # # remote_addr = self.remote_address if self.remote_address else header_result[1]
+        #
+        #
         # self._remote_address
         # self._client_address
 
@@ -628,8 +654,8 @@ class TCPRelayHandler(object):
             return
 
         activity = {
-            'remote_address': self._remote_address,
-            'client_address': self._client_address,
+            'remote_address': self._remote_address[0],
+            'local_address': self._client_address[0],
             'protocal': 'TCP',
             'type': 'DOWN',
             'traffic': len(data),
@@ -637,6 +663,8 @@ class TCPRelayHandler(object):
         }
 
         self._update_activity(activity)
+
+
         if self._is_local:
             data = self._cryptor.decrypt(data)
         else:

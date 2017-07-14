@@ -193,7 +193,7 @@ class UDPRelay(object):
         if self._stat_callback:
             activity = {
                 'remote_address': r_addr[0],
-                'client_address': dest_addr,
+                'local_address': dest_addr,
                 'protocal': 'UDP',
                 'type': 'DOWN',
                 'traffic': len(data),
@@ -319,7 +319,7 @@ class UDPRelay(object):
         if self._stat_callback:
             activity = {
                 'remote_address': client_addr,
-                'client_address': r_addr[0],
+                'local_address': r_addr[0],
                 'protocal': 'UDP',
                 'type': 'UP',
                 'traffic': len(data),

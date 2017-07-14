@@ -218,24 +218,24 @@ class Manager(object):
     def stat_callback(self, port, activity):
         # activity = {
         #     'remote_address': self._remote_address,
-        #     'client_address': self._client_address,
+        #     'local_address': self._client_address,
         #     'protocal': 'TCP',
         #     'type': 'UP',
         #     'traffic': len(data),
         #     'time': datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         # }
 
-        tcp_up = activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'UP' else 0,
-        tcp_down = activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'DOWN' else 0,
-        udp_up = activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'UP' else 0,
-        udp_down = activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'DOWN' else 0,
+        tcp_up = int(activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'UP' else 0)
+        tcp_down = int(activity['traffic'] if activity['protocal'] == 'TCP' and activity['type'] == 'DOWN' else 0)
+        udp_up = int(activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'UP' else 0)
+        udp_down = int(activity['traffic'] if activity['protocal'] == 'UDP' and activity['type'] == 'DOWN' else 0)
 
         if self._statistics[port]:
             traffic = self._statistics[port]
 
             traffic['activities'].append(activity)
 
-            traffic['total'] += activity['traffic']
+            traffic['total'] += int(activity['traffic'])
 
             traffic['tcpUp'] += tcp_up
             traffic['tcpDown'] += tcp_down
@@ -243,7 +243,7 @@ class Manager(object):
             traffic['udpDown'] += udp_down
         else:
             traffic = {
-                'total': activity['traffic'],
+                'total': int(activity['traffic']),
                 'tcpUp': tcp_up,
                 'tcpDown': tcp_down,
                 'udpUp': udp_up,

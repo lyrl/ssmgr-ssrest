@@ -291,7 +291,7 @@ class DNSResolver(object):
         except IOError:
             pass
         if not self._servers:
-            self._servers = ['8.8.4.4', '8.8.8.8']
+            self._servers = ['114.114.114.114', '8.8.4.4', '8.8.8.8']
 
     def _parse_hosts(self):
         etc_path = '/etc/hosts'
