@@ -1,4 +1,5 @@
 import gevent
+import time
 from gevent.queue import Queue
 import shadowsocks.util
 from shadowsocks.util import HttpUtilException
@@ -22,6 +23,7 @@ def loop():
             work(task)
 
         logging.info('Sleep 10 seconds for next push !')
+        time.sleep(10)
 # add task
 # loop
 # task_failed_handle
