@@ -8,42 +8,39 @@ import logging
 tasks = Queue()
 failedTasks = []
 
-def worker(n):
-    task = tasks.get()
-    logging.info('Worker %s got task %s' % (n, task))
-
-    try:
-        data = shadowsocks.util.send_post(task['url'], {'data': task['data']})
-        print data
-    except HttpUtilException as e:
-        logging.warn('create a new task!!! %s' % e.message)
-
-        if task['data']['traffics']:
-            failedTasks.append(task)
-
-    gevent.sleep(0)
-
-    logging.info('Worker %s Quitting!' % n)
-
 
 def add_task(task):
     tasks.put_nowait(task)
 
 
 def loop():
+    logging.info('Traffic Data Push Service Started!')
+
     while True:
         while not tasks.empty():
-            gevent.joinall([
-                gevent.spawn(worker, 'poster 1'),
-            ])
+            task = tasks.get()
+            work(task)
 
-        logging.info('Sleep 10 seconds!')
-        gevent.sleep(10)
-        for task in failedTasks:
+        logging.info('Sleep 10 seconds for next push !')
+# add task
+# loop
+# task_failed_handle
+
+
+def work(task):
+    task = tasks.get()
+    logging.info('Prepare push traffic data to %s' % (task['url']))
+
+    try:
+        data = shadowsocks.util.send_post(task['url'], {'data': task['data']})
+
+        logging.info('Traffice data push sucessed , server return msg %s' % (data))
+    except HttpUtilException as e:
+        logging.warn('Traffice data push failed, reason:  [%s] ' % e.message)
+
+        if task['data']['traffics']:
             tasks.put_nowait(task)
-
-
-
-
-
+            logging.info('Task refill to task queue wating next push !')
+        else:
+            logging.info('Task traffic data is null will not refill to task queue !')
 
