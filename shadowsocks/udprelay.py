@@ -192,8 +192,8 @@ class UDPRelay(object):
 
         if self._stat_callback:
             activity = {
-                'remote_address': r_addr[0],
-                'local_address': dest_addr,
+                'remote_address': dest_addr,
+                'local_address': r_addr[0],
                 'protocal': 'UDP',
                 'type': 'DOWN',
                 'traffic': len(data),
