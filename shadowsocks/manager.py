@@ -261,7 +261,7 @@ class Manager(object):
             "security_key": self._config['security_key']
         }
 
-        logging.info("data:" + json.dumps(data))
+        #logging.info(u"data:" + json.dumps(data))
 
         url = 'http://%s:%s/api/comm/traffics' % (self._config['ssmgr_backend_host'], self._config['ssmgr_backend_port'])
 
